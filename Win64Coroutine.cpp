@@ -177,8 +177,10 @@ int main()
         }
         cout << "THREAD lambda FINISHED" << endl;
     });
-    cout << "main: sum=" << sum << endl;
-    return runtime.run();
+    cout << "main start : sum=" << sum << endl;
+    int ret = runtime.run();
+    cout << "main end : sum=" << sum << endl;
+    return ret;
 }
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu
 // Debug program: F5 or Debug > Start Debugging menu
