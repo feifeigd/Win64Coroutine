@@ -1,8 +1,10 @@
 # Win64Coroutine
 
-缺点：
 
-只能传 void func(){} 创建协程
+
+支持传 void func(){} 创建协程
+
+支持 lambda 创建协程 [](){code;}
 
 示例：
 
