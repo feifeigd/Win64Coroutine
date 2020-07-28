@@ -1,9 +1,11 @@
-// Win64Coroutine.cpp : This file contains the 'main' function. Program execution begins and ends there.
+Ôªø// Win64Coroutine.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
 #include <cassert>
+#include <functional>
 #include <iostream>
 #include <vector>
+
 using namespace std;
 
 const size_t DEFAULT_STACK_SIZE = 1024 * 1024 * 2;
@@ -24,8 +26,11 @@ struct ThreadContext {
     void* r15, * r14, * r13, * r12;
     void* rbx;
     void* rbp;
+    void* rcx;
     //void* rip;
 };
+
+using Job = std::function<void()>;
 
 class Thread {
 public:
@@ -33,6 +38,7 @@ public:
     vector<char> stack;
     ThreadContext ctx{};
     State state = State::Available;
+    Job job;
     Thread(size_t id_) : id(id_) {
         stack.resize(DEFAULT_STACK_SIZE);
     }
@@ -43,6 +49,9 @@ typedef void(*F)();
 class Runtime;
 Runtime* RUNTIME;
 void guard();
+void _exec(Thread* t) {
+    t->job();
+}
 
 class Runtime {
 public:
@@ -51,7 +60,7 @@ public:
 
     Runtime() {
         threads.reserve(MAX_THREADS);
-        threads.emplace_back(0);    // ’ºŒª
+        threads.emplace_back(0);    // Âç†‰Ωç
         threads[0].state = State::Running;
         for (size_t i = 1; i < MAX_THREADS; i++)
         {
@@ -88,7 +97,7 @@ public:
             }
             if (pos == current)
             {
-                return false;   // Ω· ¯
+                return false;   // ÁªìÊùü
             }
         }
         if (threads[current].state != State::Available) {
@@ -101,18 +110,20 @@ public:
         return threads.size();
     }
 
-    void spawn(F f) {
+    void spawn(Job && f) {
         auto available = find_if(threads.begin(), threads.end(), [](Thread const& t) {return t.state == State::Available; });
         if (available == threads.end())
         {
             return;
         }
+        available->job = f;
         void** stack = (void**)(available->stack.data() + available->stack.size());
         // stack[-1] = &*available;
         stack[-3] = guard;
-        stack[-4] = f;  // f returnµƒ ±∫Ú£¨æÕ∞—guardµØ»Î rip
+        stack[-4] = _exec;  // f returnÁöÑÊó∂ÂÄôÔºåÂ∞±ÊääguardÂºπÂÖ• rip
         available->ctx.rsp = stack - 4;
         available->ctx.rbp = stack - 3;
+        available->ctx.rcx = &*available;   // _exec ÁöÑÂèÇÊï∞
         //available->ctx.rip = f;
         available->state = State::Ready;
     }
@@ -154,6 +165,19 @@ int main()
     runtime.init();
     runtime.spawn(func1);
     runtime.spawn(func2);
+    int sum = 0;
+    runtime.spawn([&sum]() {
+        cout << "THREAD lambda STARTING" << endl;
+        string id = "lambda";
+        for (size_t i = 0; i < 25; i++)
+        {
+            sum += i;
+            cout << "thread: " << id << " counter: " << i << ",sum=" << sum << endl;
+            yield_thread();
+        }
+        cout << "THREAD lambda FINISHED" << endl;
+    });
+    cout << "main: sum=" << sum << endl;
     return runtime.run();
 }
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu

@@ -9,6 +9,7 @@ _switch proc
 	mov qword ptr[rcx + 20h], r12
 	mov qword ptr[rcx + 28h], rbx
 	mov qword ptr[rcx + 30h], rbp
+	mov qword ptr[rcx + 38h], rcx
 
 	mov rsp, qword ptr[rdx + 00h]
 	mov r15, qword ptr[rdx + 08h]
@@ -17,6 +18,8 @@ _switch proc
 	mov r12, qword ptr[rdx + 20h]
 	mov rbx, qword ptr[rdx + 28h]
 	mov rbp, qword ptr[rdx + 30h]
+	mov rcx, qword ptr[rdx + 38h]
+	 
 	ret
 
 _switch endp
